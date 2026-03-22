@@ -1,5 +1,6 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 
+import Auth from "./components/Auth"
 import Navbar from "./components/Navbar"
 import Sidebar from "./components/Sidebar"
 import StudyForm from "./components/StudyForm"
@@ -16,8 +17,40 @@ import ExamCountdown from "./components/ExamCountdown"
 
 function App(){
 
+  const [token, setToken] = useState(localStorage.getItem('token') || null)
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || null)
+
   const [subjects,setSubjects] = useState([])
   const [plan,setPlan] = useState([])
+
+  const dataFetched = useRef(false)
+
+  useEffect(() => {
+    if (token) {
+      fetch('http://localhost:5000/api/data', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.subjects && data.subjects.length > 0) setSubjects(data.subjects)
+        if (data.plan && data.plan.length > 0) setPlan(data.plan)
+        
+        // Timeout to allow initial states to settle without immediately triggering the save useEffect
+        setTimeout(() => { dataFetched.current = true }, 500)
+      })
+      .catch(console.error)
+    }
+  }, [token])
+
+  useEffect(() => {
+    if (token && dataFetched.current) {
+      fetch('http://localhost:5000/api/data', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subjects, plan })
+      }).catch(console.error)
+    }
+  }, [subjects, plan, token])
 
   const dashboardRef = useRef(null)
   const studyRef = useRef(null)
@@ -46,6 +79,10 @@ function App(){
     },1000)
   }
 
+  if (!token) {
+    return <Auth setToken={setToken} setUser={setUser} />
+  }
+
   return(
 
     <div className="dashboard">
@@ -69,7 +106,7 @@ function App(){
 
       <div className="main">
 
-        <Navbar/>
+        <Navbar user={user} setToken={setToken} setUser={setUser}/>
 
         <div className="content">
 
