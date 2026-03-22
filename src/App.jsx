@@ -24,10 +24,12 @@ function App(){
   const [plan,setPlan] = useState([])
 
   const dataFetched = useRef(false)
+  
+  const API_BASE_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : `http://${window.location.hostname}:5000`);
 
   useEffect(() => {
     if (token) {
-      fetch('http://localhost:5000/api/data', {
+      fetch(`${API_BASE_URL}/api/data`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -44,7 +46,7 @@ function App(){
 
   useEffect(() => {
     if (token && dataFetched.current) {
-      fetch('http://localhost:5000/api/data', {
+      fetch(`${API_BASE_URL}/api/data`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ subjects, plan })
