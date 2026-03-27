@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { jsPDF } from "jspdf";
+import * as JSPDF from "jspdf";
 
 export default function AiSummarizer() {
   const [text, setText] = useState("");
@@ -69,7 +69,7 @@ export default function AiSummarizer() {
   const downloadSummaryAsPDF = () => {
     if (!summary) return;
 
-    const doc = new jsPDF();
+    const doc = new JSPDF.jsPDF();
     doc.setFontSize(16);
     doc.text("AI Summary", 14, 18);
     doc.setFontSize(11);
