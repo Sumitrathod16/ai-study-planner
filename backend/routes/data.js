@@ -19,39 +19,55 @@ const authMiddleware = (req, res, next) => {
 };
 
 // Get Data
-router.get('/', authMiddleware, (req, res) => {
-  req.db.get(`SELECT * FROM study_data WHERE user_id = ?`, [req.user.id], (err, row) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+router.get('/', authMiddleware, async (req, res) => {
+  try {
+    const result = await req.db.execute({
+      sql: `SELECT * FROM study_data WHERE user_id = ?`,
+      args: [req.user.id]
+    });
+    const row = result.rows[0];
     if (!row) return res.json({ subjects: [], plan: [] });
 
     res.json({
       subjects: JSON.parse(row.subjects || '[]'),
       plan: JSON.parse(row.plan || '[]')
     });
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 // Save Data
-router.post('/', authMiddleware, (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   const { subjects, plan } = req.body;
   const subjects_str = JSON.stringify(subjects || []);
   const plan_str = JSON.stringify(plan || []);
 
-  req.db.get(`SELECT * FROM study_data WHERE user_id = ?`, [req.user.id], (err, row) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+  try {
+    const result = await req.db.execute({
+      sql: `SELECT * FROM study_data WHERE user_id = ?`,
+      args: [req.user.id]
+    });
+    const row = result.rows[0];
 
     if (row) {
-      req.db.run(`UPDATE study_data SET subjects = ?, plan = ? WHERE user_id = ?`, [subjects_str, plan_str, req.user.id], (err) => {
-         if (err) return res.status(500).json({ error: 'Database error' });
-         res.json({ message: 'Data updated successfully' });
+      await req.db.execute({
+        sql: `UPDATE study_data SET subjects = ?, plan = ? WHERE user_id = ?`,
+        args: [subjects_str, plan_str, req.user.id]
       });
+      res.json({ message: 'Data updated successfully' });
     } else {
-      req.db.run(`INSERT INTO study_data (user_id, subjects, plan) VALUES (?, ?, ?)`, [req.user.id, subjects_str, plan_str], (err) => {
-         if (err) return res.status(500).json({ error: 'Database error' });
-         res.json({ message: 'Data saved successfully' });
+      await req.db.execute({
+        sql: `INSERT INTO study_data (user_id, subjects, plan) VALUES (?, ?, ?)`,
+        args: [req.user.id, subjects_str, plan_str]
       });
+      res.json({ message: 'Data saved successfully' });
     }
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 module.exports = router;
