@@ -25,7 +25,7 @@ function App(){
 
   const dataFetched = useRef(false)
   
-  const API_BASE_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : '');
+  const API_BASE_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/_/backend');
 
   useEffect(() => {
     if (token) {
